@@ -10,6 +10,7 @@ struct MainVerificationView: View {
     @State private var showRegistration = false
     @State private var showURLVerification = false
     @State private var showTicketVerification = false
+    @State private var showTicketsList = false
     @State private var animateLogo = false
     
     // Paleta SECURE-IT (más énfasis en azules)
@@ -26,6 +27,10 @@ struct MainVerificationView: View {
             URLVerificationView()
         } else if showTicketVerification {
             TicketVerificationView()
+        } else if showTicketsList {
+            TicketsListView(onDismiss: {
+                showTicketsList = false
+            })
         } else {
             ZStack {
                 // Fondo con gradiente balanceado azul-verde
@@ -215,8 +220,7 @@ struct MainVerificationView: View {
                                 ),
                                 isPrimary: true,
                                 action: {
-                                    let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene
-                                    windowScene?.windows.first?.rootViewController = UIHostingController(rootView: TicketsListView())
+                                    showTicketsList = true
                                 }
                             )
                         }
