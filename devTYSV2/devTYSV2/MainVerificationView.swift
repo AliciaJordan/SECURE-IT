@@ -204,6 +204,21 @@ struct MainVerificationView: View {
                                     showURLVerification = true
                                 }
                             )
+                            MainActionButton(
+                                icon: "qrcode.viewfinder",
+                                title: "Mis Boletos y QR",
+                                subtitle: "Visualiza tus tickets guardados",
+                                gradient: LinearGradient(
+                                    gradient: Gradient(colors: [primaryGreen, primaryTeal]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                ),
+                                isPrimary: true,
+                                action: {
+                                    let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene
+                                    windowScene?.windows.first?.rootViewController = UIHostingController(rootView: TicketsListView())
+                                }
+                            )
                         }
                         .padding(.horizontal, 24)
                         .padding(.bottom, 32)
