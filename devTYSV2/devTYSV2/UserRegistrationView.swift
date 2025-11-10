@@ -25,6 +25,9 @@ struct UserRegistrationView: View {
     @State private var imagePickerSourceType: UIImagePickerController.SourceType = .photoLibrary
     @State private var currentImageType: ImageType = .id
     
+    // 🔙 Dismiss para volver al view anterior
+    @Environment(\.dismiss) private var dismiss
+    
     // CoreML states
     @StateObject private var coreMLManager = CoreMLManager()
     @State private var idClassification: String = ""
@@ -61,7 +64,7 @@ struct UserRegistrationView: View {
                     // Header
                     HStack {
                         Button(action: {
-                            // Back action
+                            dismiss()
                         }) {
                             HStack(spacing: 8) {
                                 Image(systemName: "chevron.left")

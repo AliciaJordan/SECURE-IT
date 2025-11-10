@@ -207,11 +207,9 @@ struct OnboardingPage1: View {
                     )
                 
                 // Placeholder para PNG
-                Image("tortuga")
+                Image(uiImage: UIImage(named: "tortuga")!)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 120, height: 120)
-                    .opacity(0.95)
 
             }
             .frame(height: 180)
@@ -289,12 +287,9 @@ struct OnboardingPage2: View {
                         )
                 }
                 
-                // Placeholder para PNG
-                Image("tortuga")
+                Image(uiImage: UIImage(named: "tortuga")!)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 120, height: 120)
-                    .opacity(0.95)
 
                 
                 // Icono de IA flotante
@@ -388,12 +383,9 @@ struct OnboardingPage3: View {
                     )
                 
                 // Placeholder para PNG
-                // Placeholder para PNG
-                Image("tortuga")
+                Image(uiImage: UIImage(named: "tortuga")!)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 120, height: 120)
-                    .opacity(0.95)
 
                 
                 // Escudo flotante
