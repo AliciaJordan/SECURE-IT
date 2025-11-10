@@ -24,6 +24,11 @@ struct UserRegistrationView: View {
     @State private var showingImagePicker = false
     @State private var imagePickerSourceType: UIImagePickerController.SourceType = .photoLibrary
     @State private var currentImageType: ImageType = .id
+    @State private var passportCountryResult: CoreMLManager.PassportCountryResult?
+    @State private var isDetectingPassportCountry = false
+    @State private var passportOriginLabel: String = ""
+    @State private var passportOriginConfidence: Double = 0.0
+    @State private var isClassifyingPassportOrigin = false
     
     // 🔙 Dismiss para volver al view anterior
     @Environment(\.dismiss) private var dismiss
@@ -226,6 +231,89 @@ struct UserRegistrationView: View {
                                         .padding(12)
                                         .background(primaryPale.opacity(0.5))
                                         .cornerRadius(10)
+                                    }
+                                    
+                                    if idImage != nil {
+                                        if isClassifyingPassportOrigin {
+                                            HStack(spacing: 10) {
+                                                ProgressView()
+                                                    .scaleEffect(0.8)
+                                                Text("Clasificando origen del pasaporte...")
+                                                    .font(.system(size: 13, weight: .medium))
+                                                    .foregroundColor(.gray)
+                                                Spacer()
+                                            }
+                                            .padding(12)
+                                            .background(primaryPale.opacity(0.3))
+                                            .cornerRadius(10)
+                                        } else if let passportOriginDisplayText = passportOriginDisplayText {
+                                            HStack(spacing: 12) {
+                                                Image(systemName: passportOriginLabel == "MEX" ? "flag.fill" : "globe")
+                                                    .foregroundColor(passportOriginLabel == "MEX" ? primaryGreen : primaryTeal)
+                                                    .font(.system(size: 18))
+                                                
+                                                VStack(alignment: .leading, spacing: 2) {
+                                                    Text("Clasificación pasaporte: \(passportOriginDisplayText)")
+                                                        .font(.system(size: 14, weight: .semibold))
+                                                        .foregroundColor(primaryDark)
+                                                    Text("Confianza: \(Int(passportOriginConfidence * 100))%")
+                                                        .font(.system(size: 12))
+                                                        .foregroundColor(.gray)
+                                                }
+                                                
+                                                Spacer()
+                                            }
+                                            .padding(12)
+                                            .background(primaryPale.opacity(0.5))
+                                            .cornerRadius(10)
+                                        }
+                                        
+                                        if isDetectingPassportCountry && passportOriginLabel != "MEX" {
+                                            HStack(spacing: 10) {
+                                                ProgressView()
+                                                    .scaleEffect(0.8)
+                                                Text("Detectando país del pasaporte...")
+                                                    .font(.system(size: 13, weight: .medium))
+                                                    .foregroundColor(.gray)
+                                                Spacer()
+                                            }
+                                            .padding(12)
+                                            .background(primaryPale.opacity(0.3))
+                                            .cornerRadius(10)
+                                        } else if let passportCountryResult = passportCountryResult, passportCountryResult.isoCode != "MEX" {
+                                            HStack(spacing: 12) {
+                                                Image(systemName: "globe")
+                                                    .foregroundColor(primaryTeal)
+                                                    .font(.system(size: 18))
+                                                
+                                                VStack(alignment: .leading, spacing: 2) {
+                                                    Text("País detectado: \(passportCountryResult.displayName)")
+                                                        .font(.system(size: 14, weight: .semibold))
+                                                        .foregroundColor(primaryDark)
+                                                    Text("Código ISO3: \(passportCountryResult.isoCode)")
+                                                        .font(.system(size: 12))
+                                                        .foregroundColor(.gray)
+                                                }
+                                                
+                                                Spacer()
+                                            }
+                                            .padding(12)
+                                            .background(primaryPale.opacity(0.5))
+                                            .cornerRadius(10)
+                                        } else if shouldShowCountryDetectionFailure {
+                                            HStack(spacing: 10) {
+                                                Image(systemName: "exclamationmark.triangle.fill")
+                                                    .foregroundColor(.orange)
+                                                    .font(.system(size: 16))
+                                                Text("No se pudo detectar el país del pasaporte. Intenta usar una imagen más clara.")
+                                                    .font(.system(size: 12))
+                                                    .foregroundColor(.gray)
+                                                Spacer()
+                                            }
+                                            .padding(12)
+                                            .background(primaryPale.opacity(0.3))
+                                            .cornerRadius(10)
+                                        }
                                     }
                                 }
                                 
@@ -482,12 +570,60 @@ struct UserRegistrationView: View {
         isClassifying = true
         idClassification = ""
         classificationConfidence = 0.0
+        passportCountryResult = nil
+        isDetectingPassportCountry = true
+        passportOriginLabel = ""
+        passportOriginConfidence = 0.0
+        isClassifyingPassportOrigin = true
         
         coreMLManager.classifyImage(image) { classification, confidence in
             isClassifying = false
             idClassification = classification
             classificationConfidence = confidence
         }
+        
+        coreMLManager.detectPassportCountry(from: image) { result in
+            passportCountryResult = result
+            isDetectingPassportCountry = false
+        }
+        
+        coreMLManager.classifyPassportOrigin(image) { label, confidence in
+            passportOriginLabel = label
+            passportOriginConfidence = confidence
+            if label == "MEX" && (passportCountryResult?.isoCode != "MEX") {
+                passportCountryResult = CoreMLManager.PassportCountryResult(isoCode: "MEX", displayName: "México")
+            }
+            isClassifyingPassportOrigin = false
+        }
+    }
+}
+
+private extension UserRegistrationView {
+    var passportOriginDisplayText: String? {
+        let normalizedLabel = passportOriginLabel.uppercased()
+        guard !normalizedLabel.isEmpty else { return nil }
+        
+        if normalizedLabel == "MEX" {
+            return "Mexicano"
+        }
+        
+        if let countryName = passportCountryResult?.displayName, !countryName.isEmpty {
+            return "Otro (\(countryName))"
+        }
+        
+        if !isDetectingPassportCountry {
+            return "Otro"
+        }
+        
+        return nil
+    }
+    
+    var shouldShowCountryDetectionFailure: Bool {
+        let normalizedLabel = passportOriginLabel.uppercased()
+        return !isDetectingPassportCountry &&
+        !normalizedLabel.isEmpty &&
+        normalizedLabel != "MEX" &&
+        passportCountryResult == nil
     }
 }
 
